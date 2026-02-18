@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1B3A5C">
+<title>BBS Site Risk Assessment</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQkJTIFJpc2sgQXNzZXNzbWVudCIsInNob3J0X25hbWUiOiJCQlMgUkEiLCJzdGFydF91cmwiOiIuIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzFCM0E1QyIsInRoZW1lX2NvbG9yIjoiIzFCM0E1QyJ9">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #F0F4F8; min-height: 100vh; min-height: 100dvh; overscroll-behavior: none; }
+  input, textarea, button { font-family: inherit; }
+  
+  :root {
+    --navy: #1B3A5C;
+    --teal: #0D9488;
+    --teal-dark: #0F766E;
+    --red: #DC2626;
+    --amber: #F59E0B;
+    --green: #16A34A;
+    --light-bg: #F0F4F8;
+    --white: #FFFFFF;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .screen { display: none; min-height: 100vh; min-height: 100dvh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* START SCREEN */
+  .start-screen {
+    background: linear-gradient(135deg, var(--navy) 0%, #2D5A8E 100%);
+    align-items: center; justify-content: center; padding: 24px;
+  }
+  .start-card {
+    background: var(--white); border-radius: 20px; padding: 32px 24px;
+    width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .start-header { text-align: center; margin-bottom: 28px; }
+  .start-header .icon { font-size: 36px; margin-bottom: 8px; }
+  .start-header h1 { font-size: 22px; font-weight: 800; color: var(--navy); letter-spacing: -0.5px; }
+  .start-header p { font-size: 14px; color: #64748B; font-weight: 500; margin-top: 4px; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-group label { font-size: 13px; font-weight: 600; color: var(--navy); display: block; margin-bottom: 6px; }
+  .form-group input, .form-group textarea {
+    width: 100%; padding: 12px 14px; border: 2px solid #E2E8F0; border-radius: 12px;
+    font-size: 16px; outline: none; background: var(--light-bg); transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group textarea:focus { border-color: var(--teal); }
+  .form-group textarea { resize: none; }
+
+  .btn-start {
+    width: 100%; margin-top: 24px; padding: 14px 0; background: #CBD5E1; color: var(--white);
+    border: none; border-radius: 14px; font-size: 17px; font-weight: 700; cursor: default;
+    transition: all 0.2s; letter-spacing: 0.3px;
+  }
+  .btn-start.ready { background: var(--teal); cursor: pointer; }
+  .btn-start.ready:active { transform: scale(0.98); }
+  .start-footer { text-align: center; font-size: 12px; color: #94A3B8; margin-top: 16px; line-height: 1.5; }
+
+  /* ASSESS SCREEN */
+  .assess-screen { background: var(--light-bg); }
+  .assess-header { background: var(--navy); padding: 14px 20px; color: var(--white); flex-shrink: 0; }
+  .assess-header-row { display: flex; justify-content: space-between; align-items: center; }
+  .assess-header-row span:first-child { font-weight: 700; font-size: 14px; letter-spacing: 0.3px; }
+  .assess-header-row span:last-child { font-size: 13px; opacity: 0.8; }
+  .progress-track { margin-top: 10px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }
+  .progress-fill { height: 100%; background: var(--teal); border-radius: 2px; transition: width 0.4s ease; }
+
+  .dot-nav { display: flex; justify-content: center; gap: 6px; padding: 14px 16px 6px; flex-wrap: wrap; flex-shrink: 0; }
+  .dot-btn {
+    width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent;
+    color: var(--white); font-size: 12px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  }
+  .dot-btn.active { border: 3px solid var(--navy); box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--navy); }
+
+  .card-area { flex: 1; padding: 12px 16px 24px; display: flex; flex-direction: column; overflow-y: auto; }
+  .assess-card {
+    background: var(--white); border-radius: 20px; padding: 24px;
+    box-shadow: var(--shadow); flex: 1; display: flex; flex-direction: column;
+  }
+  .cat-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .cat-icon {
+    font-size: 32px; width: 52px; height: 52px; background: var(--light-bg);
+    border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .cat-step { font-size: 12px; color: var(--teal); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .cat-title { margin: 0; font-size: 20px; font-weight: 800; color: var(--navy); }
+  .cat-question { font-size: 16px; color: #334155; font-weight: 600; margin: 0 0 12px; line-height: 1.5; }
+
+  .prompts-box { background: var(--light-bg); border-radius: 12px; padding: 10px 14px; margin-bottom: 20px; }
+  .prompts-label { font-size: 11px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  .prompts-box p { font-size: 13px; color: #475569; margin: 3px 0; line-height: 1.4; }
+
+  .rating-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .rating-btn {
+    padding: 14px 10px; border: 2px solid #E2E8F0; border-radius: 14px;
+    background: var(--white); cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .rating-btn:active { transform: scale(0.97); }
+  .rating-btn.selected { border-width: 3px; }
+  .rating-btn .emoji { font-size: 18px; }
+  .rating-btn .label { font-size: 15px; font-weight: 700; }
+
+  .note-area { animation: fadeIn 0.3s ease; }
+  .note-area label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; }
+  .note-area textarea {
+    width: 100%; padding: 10px 12px; border-width: 2px; border-style: solid;
+    border-radius: 12px; font-size: 14px; outline: none; resize: none; font-family: inherit;
+  }
+
+  .card-spacer { flex: 1; }
+
+  .nav-row { display: flex; gap: 10px; margin-top: 16px; }
+  .btn-back {
+    flex: 1; padding: 13px 0; background: var(--light-bg); color: var(--navy);
+    border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .btn-next {
+    flex: 2; padding: 13px 0; background: #CBD5E1; color: var(--white);
+    border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: default; transition: all 0.2s;
+  }
+  .btn-next.ready { background: var(--teal); cursor: pointer; }
+  .btn-next.ready:active { transform: scale(0.98); }
+
+  /* SUMMARY SCREEN */
+  .summary-screen { background: var(--light-bg); }
+  .summary-header { background: var(--navy); padding: 14px 20px; color: var(--white); flex-shrink: 0; }
+  .summary-body { padding: 16px 16px 160px; overflow-y: auto; flex: 1; }
+
+  .status-banner { border-radius: 16px; padding: 18px 20px; margin-bottom: 16px; text-align: center; border-width: 2px; border-style: solid; }
+  .status-banner .status-icon { font-size: 36px; margin-bottom: 6px; }
+  .status-banner h2 { margin: 0; font-size: 17px; font-weight: 800; }
+
+  .job-info { background: var(--white); border-radius: 14px; padding: 14px 18px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .job-info p { margin: 0 0 4px; font-size: 13px; color: #64748B; }
+  .job-info p:last-child { margin: 0; }
+
+  .results-list { display: flex; flex-direction: column; gap: 8px; }
+  .result-item {
+    background: var(--white); border-radius: 12px; padding: 12px 16px; box-shadow: var(--shadow);
+    cursor: pointer; display: flex; align-items: flex-start; gap: 12px; border-left: 4px solid;
+  }
+  .result-item:active { transform: scale(0.99); }
+  .result-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+  .result-content { flex: 1; min-width: 0; }
+  .result-row { display: flex; justify-content: space-between; align-items: center; }
+  .result-title { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .result-badge { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .result-note { margin: 4px 0 0; font-size: 12px; color: #64748B; font-style: italic; line-height: 1.4; }
+
+  .overall-notes { background: var(--white); border-radius: 14px; padding: 14px 18px; margin-top: 12px; box-shadow: var(--shadow); }
+  .overall-notes label { font-size: 13px; font-weight: 700; color: var(--navy); display: block; margin-bottom: 8px; }
+  .overall-notes textarea {
+    width: 100%; padding: 10px 12px; border: 2px solid #E2E8F0; border-radius: 10px;
+    font-size: 14px; outline: none; resize: none; font-family: inherit; background: var(--light-bg);
+    transition: border-color 0.2s;
+  }
+  .overall-notes textarea:focus { border-color: var(--teal); }
+
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--white);
+    padding: 12px 16px 20px; border-top: 1px solid #E2E8F0;
+    display: flex; gap: 10px; box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    z-index: 100;
+  }
+  .btn-copy {
+    flex: 1; padding: 13px 0; background: var(--light-bg); color: var(--navy);
+    border: 2px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .btn-whatsapp {
+    flex: 2; padding: 13px 0; background: #25D366; color: var(--white);
+    border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-whatsapp:active, .btn-copy:active { transform: scale(0.97); }
+  .btn-reset {
+    position: fixed; bottom: 76px; left: 16px; right: 16px; z-index: 100;
+    width: calc(100% - 32px); padding: 10px 0; background: transparent; color: #94A3B8;
+    border: none; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.3s ease; }
+</style>
+</head>
+<body>
+
+<!-- ==================== START SCREEN ==================== -->
+<div id="startScreen" class="screen active start-screen">
+  <div class="start-card">
+    <div class="start-header">
+      <div class="icon">🔍</div>
+      <h1>BBS WINDOW BLINDS</h1>
+      <p>1-Minute Site Risk Assessment</p>
+    </div>
+    <div class="form-group">
+      <label>Your Name</label>
+      <input type="text" id="nameInput" placeholder="e.g. Mike" autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" id="dateInput">
+    </div>
+    <div class="form-group">
+      <label>Job Address</label>
+      <textarea id="addressInput" rows="2" placeholder="e.g. Unit 4, Oxford Road, Manchester"></textarea>
+    </div>
+    <button class="btn-start" id="startBtn" onclick="startAssessment()">Start Assessment →</button>
+    <p class="start-footer">Complete all 10 checks, then share to WhatsApp for your records.</p>
+  </div>
+</div>
+
+<!-- ==================== ASSESS SCREEN ==================== -->
+<div id="assessScreen" class="screen assess-screen">
+  <div class="assess-header">
+    <div class="assess-header-row">
+      <span>BBS SITE ASSESSMENT</span>
+      <span id="progressLabel">0/10 done</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressBar" style="width:0%"></div>
+    </div>
+  </div>
+  <div class="dot-nav" id="dotNav"></div>
+  <div class="card-area" id="cardArea">
+    <div class="assess-card" id="assessCard"></div>
+  </div>
+</div>
+
+<!-- ==================== SUMMARY SCREEN ==================== -->
+<div id="summaryScreen" class="screen summary-screen">
+  <div class="summary-header">
+    <div class="assess-header-row">
+      <span>ASSESSMENT COMPLETE</span>
+      <span>10/10 ✓</span>
+    </div>
+  </div>
+  <div class="summary-body" id="summaryBody"></div>
+  <button class="btn-reset" id="resetBtn" onclick="resetAll()">🔄 Start New Assessment</button>
+  <div class="bottom-bar">
+    <button class="btn-copy" onclick="copyResults()">📋 Copy</button>
+    <button class="btn-whatsapp" onclick="shareWhatsApp()"><span style="font-size:20px">💬</span> Share to WhatsApp</button>
+  </div>
+</div>
+
+<script>
+const categories = [
+  { id:"access", icon:"🚪", title:"Access & Egress", question:"Is access to and from the work area clear and safe?", prompts:["Clear walkways/corridors","No trip hazards on route","Emergency exits accessible","Parking/unloading area safe"] },
+  { id:"height", icon:"🪜", title:"Working at Height", question:"Is any work at height required and properly controlled?", prompts:["Stepladders/podiums available & inspected","No fragile surfaces to work near","Edge protection where needed","Correct equipment for the task"] },
+  { id:"electrical", icon:"⚡", title:"Electrical Hazards", question:"Are electrical hazards identified and controlled?", prompts:["No exposed wiring/damaged sockets","RCD protection available if needed","Tools PAT tested & visually OK","Know location of isolator/consumer unit"] },
+  { id:"asbestos", icon:"⚠️", title:"Asbestos Register", question:"Has the asbestos register been checked before drilling/fixing?", prompts:["Register/survey sighted from client","No suspect materials in work area","If unsure — STOP and report","Pre-2000 building? Extra caution"] },
+  { id:"ppe", icon:"🦺", title:"PPE", question:"Is all required PPE available and being worn?", prompts:["Safety boots worn","Safety glasses available","Dust mask available if drilling","Gloves where needed"] },
+  { id:"manual", icon:"📦", title:"Manual Handling", question:"Are manual handling risks assessed and controlled?", prompts:["Heavy/awkward items identified","Mechanical aids or team lift planned","Clear route for carrying","No excessive reaching or twisting"] },
+  { id:"tools", icon:"🔧", title:"Tools & Equipment", question:"Are all tools and equipment in good condition?", prompts:["Visual check completed on tools","Drill bits/blades in good condition","Leads/chargers undamaged","Correct tool for the job"] },
+  { id:"site", icon:"🏢", title:"Client Site Hazards", question:"Have site-specific hazards been identified?", prompts:["Wet/slippery floors noted","Furniture/obstacles to work around","Public/staff movement in area","Dust/noise impact on others considered"] },
+  { id:"lone", icon:"👤", title:"Lone Working", question:"If working alone, are safeguards in place?", prompts:["Someone knows your location","Phone charged & signal OK","Check-in time agreed","No high-risk tasks done alone"] },
+  { id:"housekeeping", icon:"🧹", title:"Housekeeping", question:"Is the work area tidy and well-maintained?", prompts:["Work area clear of debris","Materials stored safely","Waste disposal plan in place","Area left tidy for client"] },
+];
+
+const ratingOptions = [
+  { value:"ok", label:"OK", color:"#16A34A", bg:"#DCFCE7", emoji:"✅" },
+  { value:"risk", label:"Risk Noted", color:"#F59E0B", bg:"#FEF3C7", emoji:"⚠️" },
+  { value:"stop", label:"STOP", color:"#DC2626", bg:"#FEE2E2", emoji:"🛑" },
+  { value:"na", label:"N/A", color:"#6B7280", bg:"#F3F4F6", emoji:"➖" },
+];
+
+let state = { name:"", date:"", address:"", currentIdx:0, ratings:{}, notes:{}, overallNotes:"" };
+
+// Auto-fill today's date
+document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+
+// Enable start button when fields filled
+['nameInput','addressInput'].forEach(id => {
+  document.getElementById(id).addEventListener('input', checkStartReady);
+});
+
+function checkStartReady() {
+  const n = document.getElementById('nameInput').value.trim();
+  const a = document.getElementById('addressInput').value.trim();
+  const btn = document.getElementById('startBtn');
+  if (n && a) { btn.classList.add('ready'); } else { btn.classList.remove('ready'); }
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function startAssessment() {
+  const n = document.getElementById('nameInput').value.trim();
+  const a = document.getElementById('addressInput').value.trim();
+  if (!n || !a) return;
+  state.name = n;
+  state.date = document.getElementById('dateInput').value;
+  state.address = a;
+  state.currentIdx = 0;
+  renderAssess();
+  showScreen('assessScreen');
+}
+
+function renderDots() {
+  const nav = document.getElementById('dotNav');
+  nav.innerHTML = '';
+  categories.forEach((cat, i) => {
+    const r = state.ratings[cat.id];
+    const isActive = i === state.currentIdx;
+    let color = isActive ? '#1B3A5C' : '#CBD5E1';
+    if (r === 'ok') color = '#16A34A';
+    else if (r === 'risk') color = '#F59E0B';
+    else if (r === 'stop') color = '#DC2626';
+    else if (r === 'na') color = '#9CA3AF';
+
+    const btn = document.createElement('button');
+    btn.className = 'dot-btn' + (isActive ? ' active' : '');
+    btn.style.background = color;
+    btn.textContent = i + 1;
+    btn.onclick = () => { state.currentIdx = i; renderAssess(); };
+    nav.appendChild(btn);
+  });
+}
+
+function renderAssess() {
+  const progress = Object.keys(state.ratings).length;
+  document.getElementById('progressLabel').textContent = `${progress}/10 done`;
+  document.getElementById('progressBar').style.width = `${(progress/10)*100}%`;
+
+  renderDots();
+
+  const cat = categories[state.currentIdx];
+  const currentRating = state.ratings[cat.id] || null;
+  const currentNote = state.notes[cat.id] || '';
+  const card = document.getElementById('assessCard');
+
+  let html = `
+    <div class="cat-header">
+      <div class="cat-icon">${cat.icon}</div>
+      <div>
+        <div class="cat-step">${state.currentIdx + 1} of ${categories.length}</div>
+        <h2 class="cat-title">${cat.title}</h2>
+      </div>
+    </div>
+    <p class="cat-question">${cat.question}</p>
+    <div class="prompts-box">
+      <div class="prompts-label">Things to check:</div>
+      ${cat.prompts.map(p => `<p>• ${p}</p>`).join('')}
+    </div>
+    <div class="rating-grid">
+      ${ratingOptions.map(opt => {
+        const sel = currentRating === opt.value;
+        return `<button class="rating-btn${sel ? ' selected' : ''}" 
+          style="border-color:${sel ? opt.color : '#E2E8F0'};background:${sel ? opt.bg : '#fff'}"
+          onclick="selectRating('${cat.id}','${opt.value}')">
+          <span class="emoji">${opt.emoji}</span>
+          <span class="label" style="color:${opt.color}">${opt.label}</span>
+        </button>`;
+      }).join('')}
+    </div>
+  `;
+
+  if (currentRating === 'risk' || currentRating === 'stop') {
+    const borderColor = currentRating === 'stop' ? '#DC2626' : '#F59E0B';
+    const bgColor = currentRating === 'stop' ? '#FEF2F2' : '#FFFBEB';
+    const labelColor = currentRating === 'stop' ? '#DC2626' : '#F59E0B';
+    const labelText = currentRating === 'stop' ? '⚠️ Describe the issue — DO NOT proceed' : 'Note the risk and how you\'re managing it:';
+    html += `
+      <div class="note-area fade-in">
+        <label style="color:${labelColor}">${labelText}</label>
+        <textarea id="noteInput" rows="3" placeholder="Describe what you've found..."
+          style="border-color:${borderColor};background:${bgColor}"
+          oninput="updateNote('${cat.id}', this.value)">${currentNote}</textarea>
+      </div>
+    `;
+  }
+
+  html += `<div class="card-spacer"></div>`;
+
+  html += `<div class="nav-row">`;
+  if (state.currentIdx > 0) {
+    html += `<button class="btn-back" onclick="goPrev()">← Back</button>`;
+  }
+  const isLast = state.currentIdx === categories.length - 1;
+  html += `<button class="btn-next${currentRating ? ' ready' : ''}" onclick="${currentRating ? 'goNext()' : ''}">${isLast ? 'View Summary ✓' : 'Next →'}</button>`;
+  html += `</div>`;
+
+  card.innerHTML = html;
+}
+
+function selectRating(catId, value) {
+  state.ratings[catId] = value;
+  if (value !== 'risk' && value !== 'stop') {
+    delete state.notes[catId];
+  }
+  renderAssess();
+}
+
+function updateNote(catId, value) {
+  state.notes[catId] = value;
+}
+
+function goNext() {
+  if (state.currentIdx < categories.length - 1) {
+    state.currentIdx++;
+    renderAssess();
+    document.getElementById('cardArea').scrollTo(0, 0);
+  } else {
+    renderSummary();
+    showScreen('summaryScreen');
+  }
+}
+
+function goPrev() {
+  if (state.currentIdx > 0) {
+    state.currentIdx--;
+    renderAssess();
+    document.getElementById('cardArea').scrollTo(0, 0);
+  }
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  const parts = d.split('-');
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function renderSummary() {
+  const stopCount = Object.values(state.ratings).filter(r => r === 'stop').length;
+  const riskCount = Object.values(state.ratings).filter(r => r === 'risk').length;
+
+  let statusIcon, statusText, statusColor, statusBg, statusBorder;
+  if (stopCount > 0) {
+    statusIcon = '🛑'; statusText = `${stopCount} STOP WORK ITEM(S) — Do Not Proceed`;
+    statusColor = '#DC2626'; statusBg = '#FEE2E2'; statusBorder = '#DC262620';
+  } else if (riskCount > 0) {
+    statusIcon = '⚠️'; statusText = `${riskCount} RISK(S) NOTED — Proceed with Caution`;
+    statusColor = '#F59E0B'; statusBg = '#FEF3C7'; statusBorder = '#F59E0B20';
+  } else {
+    statusIcon = '✅'; statusText = 'ALL CLEAR — Safe to Proceed';
+    statusColor = '#16A34A'; statusBg = '#DCFCE7'; statusBorder = '#16A34A20';
+  }
+
+  let html = `
+    <div class="status-banner" style="background:${statusBg};border-color:${statusBorder}">
+      <div class="status-icon">${statusIcon}</div>
+      <h2 style="color:${statusColor}">${statusText}</h2>
+    </div>
+    <div class="job-info">
+      <p>👷 <strong>${state.name}</strong>  •  📅 ${formatDate(state.date)}</p>
+      <p>📍 ${state.address}</p>
+    </div>
+    <div class="results-list">
+  `;
+
+  categories.forEach((cat, i) => {
+    const r = state.ratings[cat.id];
+    const n = state.notes[cat.id];
+    const opt = ratingOptions.find(o => o.value === r);
+    if (!opt) return;
+    html += `
+      <div class="result-item" style="border-left-color:${opt.color}" onclick="goToCategory(${i})">
+        <span class="result-icon">${cat.icon}</span>
+        <div class="result-content">
+          <div class="result-row">
+            <span class="result-title">${cat.title}</span>
+            <span class="result-badge" style="color:${opt.color};background:${opt.bg}">${opt.label}</span>
+          </div>
+          ${n && n.trim() ? `<p class="result-note">${n}</p>` : ''}
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  html += `
+    <div class="overall-notes">
+      <label>📝 Additional Notes (optional)</label>
+      <textarea id="overallNotesInput" rows="3" placeholder="Any other observations or comments..."
+        oninput="state.overallNotes=this.value">${state.overallNotes}</textarea>
+    </div>
+  `;
+
+  document.getElementById('summaryBody').innerHTML = html;
+}
+
+function goToCategory(idx) {
+  state.currentIdx = idx;
+  renderAssess();
+  showScreen('assessScreen');
+}
+
+function getSummaryText() {
+  const lines = [
+    `🔍 *BBS WINDOW BLINDS*`,
+    `*1-Minute Site Risk Assessment*`,
+    ``,
+    `👷 *Assessor:* ${state.name}`,
+    `📅 *Date:* ${formatDate(state.date)}`,
+    `📍 *Address:* ${state.address}`,
+    ``,
+    `---`,
+  ];
+
+  categories.forEach(cat => {
+    const r = state.ratings[cat.id];
+    const n = state.notes[cat.id];
+    const icon = r === 'ok' ? '✅' : r === 'risk' ? '⚠️' : r === 'stop' ? '🛑' : '➖';
+    const label = r === 'ok' ? 'OK' : r === 'risk' ? 'RISK NOTED' : r === 'stop' ? 'STOP WORK' : 'N/A';
+    lines.push(`${icon} *${cat.title}:* ${label}`);
+    if (n && n.trim()) lines.push(`   _${n.trim()}_`);
+  });
+
+  const overallNotes = state.overallNotes || (document.getElementById('overallNotesInput') ? document.getElementById('overallNotesInput').value : '');
+  if (overallNotes && overallNotes.trim()) {
+    lines.push(``);
+    lines.push(`📝 *Additional Notes:*`);
+    lines.push(overallNotes.trim());
+  }
+
+  const stopCount = Object.values(state.ratings).filter(r => r === 'stop').length;
+  const riskCount = Object.values(state.ratings).filter(r => r === 'risk').length;
+  lines.push(``);
+  if (stopCount > 0) lines.push(`🛑 *${stopCount} STOP WORK item(s) — do not proceed until resolved*`);
+  else if (riskCount > 0) lines.push(`⚠️ *${riskCount} risk(s) noted — proceed with caution*`);
+  else lines.push(`✅ *All checks passed — safe to proceed*`);
+
+  lines.push(``);
+  lines.push(`_Completed via BBS Site Assessment App_`);
+  return lines.join('\n');
+}
+
+function shareWhatsApp() {
+  const text = encodeURIComponent(getSummaryText());
+  window.open(`https://wa.me/?text=${text}`, '_blank');
+}
+
+function copyResults() {
+  const text = getSummaryText();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.btn-copy');
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
+    });
+  }
+}
+
+function resetAll() {
+  state = { name:'', date:new Date().toISOString().split('T')[0], address:'', currentIdx:0, ratings:{}, notes:{}, overallNotes:'' };
+  document.getElementById('nameInput').value = '';
+  document.getElementById('dateInput').value = state.date;
+  document.getElementById('addressInput').value = '';
+  document.getElementById('startBtn').classList.remove('ready');
+  showScreen('startScreen');
+}
+
+// Touch swipe support
+let touchStartX = null;
+document.getElementById('cardArea').addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, {passive:true});
+document.getElementById('cardArea').addEventListener('touchend', e => {
+  if (!touchStartX) return;
+  const diff = touchStartX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 50) {
+    if (diff > 0 && state.ratings[categories[state.currentIdx].id]) goNext();
+    else if (diff < 0) goPrev();
+  }
+  touchStartX = null;
+}, {passive:true});
+</script>
+</body>
+</html>
